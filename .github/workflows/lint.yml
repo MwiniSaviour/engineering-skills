@@ -27,9 +27,14 @@ jobs:
       - name: Lint every SKILL.md
         shell: node {0}
         run: |
+          // `shell: node {0}` runs this script from a temp dir, so bare
+          // require() cannot resolve packages installed in the repo. Resolve
+          // explicitly from the repo root.
+          const { createRequire } = require("module");
+          const repoRequire = createRequire(process.cwd() + "/");
+          const matter = repoRequire("gray-matter");
           const fs = require("fs");
           const path = require("path");
-          const matter = require("gray-matter");
 
           const errors = [];
           const warnings = [];
@@ -142,17 +147,27 @@ jobs:
       - uses: actions/checkout@v4
       - shell: bash
         run: |
-          # Every docs/*.md and *.md at root must reference files that exist.
-          fail=0
-          for f in README.md CONTRIBUTING.md CHANGELOG.md docs/*.md; do
+          # Two traps this step guards against:
+          # 1. pipefail: `grep` exits 1 when a file has no links, which must
+          #    not fail the step. 2. subshell scoping: a piped `while` loop
+          #    would lose failure increments — collect hits in a file.
+          broken_list="$(mktemp)"
+          : > "$broken_list"
+          for f in README.md CONTRIBUTING.md CHANGELOG.md docs/*.md skills/*/SKILL.md; do
             [ -f "$f" ] || continue
-            # Extract relative md links; skip http(s) and anchors.
-            grep -oE '\]\(([^)#]+)\)' "$f" | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:)?//' | while read -r target; do
+            links="$(grep -oE '\]\(([^)#]+)\)' "$f" 2>/dev/null | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:)?//' || true)"
+            [ -z "$links" ] && continue
+            while IFS= read -r target; do
+              [ -z "$target" ] && continue
               base="$(dirname "$f")"
               if [ ! -e "$base/$target" ]; then
                 echo "::error::$f: broken link -> $target"
-                fail=1
+                echo "$f -> $target" >> "$broken_list"
               fi
-            done
+            done <<< "$links"
           done
-          exit $fail
+          if [ -s "$broken_list" ]; then
+            echo "Broken links: $(wc -l < "$broken_list")"
+            exit 1
+          fi
+          echo "All relative links resolve."
