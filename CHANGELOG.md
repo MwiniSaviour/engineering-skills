@@ -13,5 +13,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - `templates.md` operational reference for that skill: SSH/credential discovery, prod DB via stdin piping with a quoting-pitfall table, deployed/bundle verification, nginx access-log forensics, third-party API variant matrices, Playwright payload-capture harness, GitHub Actions run watching, artifact hygiene.
 - `docs/installation.md` — install guide for opencode, Claude Code, and generic Agent Skills runtimes, with verification smoke test.
 - `docs/authoring-skills.md` — the RED/GREEN/REFACTOR methodology for writing skills that measurably change agent behavior.
-- `skills/_template/SKILL.md` — starter skeleton with the required sections.
+- `docs/skill-template.md` — starter skeleton with the required sections.
 - `CONTRIBUTING.md` — quality bar and submission process.

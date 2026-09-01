@@ -68,7 +68,7 @@ Full guide for every runtime (opencode, Claude Code, generic agentskills.io runt
 This repo doubles as a reference for engineers who want to write skills that actually change agent behavior instead of decorating it:
 
 - **[docs/authoring-skills.md](docs/authoring-skills.md)** — the methodology: RED/GREEN/REFACTOR applied to documentation, frontmatter spec (and the "description summarizes workflow" trap), word budgets, rationalization tables, how to baseline-test on a fresh agent.
-- **[skills/_template/SKILL.md](skills/_template/SKILL.md)** — starter skeleton.
+- **[docs/skill-template.md](docs/skill-template.md)** — starter skeleton.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — the quality bar: no skill ships without baseline evidence.
 
 ## Why "verify, then verify again"
