@@ -151,11 +151,13 @@ jobs:
           # 1. pipefail: `grep` exits 1 when a file has no links, which must
           #    not fail the step. 2. subshell scoping: a piped `while` loop
           #    would lose failure increments — collect hits in a file.
-          broken_list="$(mktemp)"
-          : > "$broken_list"
-          for f in README.md CONTRIBUTING.md CHANGELOG.md docs/*.md skills/*/SKILL.md; do
-            [ -f "$f" ] || continue
-            links="$(grep -oE '\]\(([^)#]+)\)' "$f" 2>/dev/null | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:)?//' || true)"
+              broken_list="$(mktemp)"
+              : > "$broken_list"
+              for f in README.md CONTRIBUTING.md CHANGELOG.md docs/*.md skills/*/SKILL.md; do
+                [ -f "$f" ] || continue
+                # Strip HTML comments first — same semantics as the Node linter;
+                # commented-out example links must not fail the check.
+                links="$(perl -0777 -pe 's/<!--[\s\S]*?-->//g' "$f" | grep -oE '\]\(([^)#]+)\)' 2>/dev/null | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:)?//' || true)"
             [ -z "$links" ] && continue
             while IFS= read -r target; do
               [ -z "$target" ] && continue
