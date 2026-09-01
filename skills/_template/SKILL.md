@@ -52,4 +52,8 @@ digraph d {
 
 ## Quick Reference
 
-Operational commands / heavy reference live in [templates.md](templates.md). Load when executing, not when deciding.
+<!-- Heavy operational reference (commands, APIs, long tables) belongs in a supporting
+     file next to this SKILL.md, e.g. templates.md, linked like:
+     See [templates.md](templates.md). Load when executing, not when deciding.
+     Create that file before shipping — CI enforces that every relative link resolves. -->
+

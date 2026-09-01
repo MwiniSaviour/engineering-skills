@@ -1,0 +1,158 @@
+name: Lint skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+  pull_request:
+    paths:
+      - "skills/**"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Validate skill frontmatter & structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontmatter parser
+        run: npm install --no-save gray-matter@4
+
+      - name: Lint every SKILL.md
+        shell: node {0}
+        run: |
+          const fs = require("fs");
+          const path = require("path");
+          const matter = require("gray-matter");
+
+          const errors = [];
+          const warnings = [];
+          let checked = 0;
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) { walk(full); continue; }
+              if (entry.name !== "SKILL.md") continue;
+              checked++;
+              const rel = path.relative(process.cwd(), full);
+              const parts = rel.split(path.sep);
+              const dirName = parts[parts.length - 2];
+
+              // Template skeletons are exempt from word budget but not structure.
+              const isTemplate = dirName.startsWith("_");
+              const raw = fs.readFileSync(full, "utf8");
+              let fm;
+              try {
+                fm = matter(raw);
+              } catch (e) {
+                errors.push(`${rel}: unparseable YAML frontmatter (${e.message})`);
+                continue;
+              }
+              const { name, description } = fm.data || {};
+              const body = fm.content;
+
+              // 1. Required fields
+              if (!name) errors.push(`${rel}: missing frontmatter "name"`);
+              if (!description) errors.push(`${rel}: missing frontmatter "description"`);
+
+              // 2. Name: letters, numbers, hyphens only; must match directory
+              if (name && !/^[a-z0-9][a-z0-9-]*$/.test(name)) {
+                errors.push(`${rel}: "name" "${name}" must be lowercase letters/numbers/hyphens`);
+              }
+              if (name && !isTemplate && name !== dirName) {
+                errors.push(`${rel}: "name" "${name}" does not match directory "${dirName}"`);
+              }
+
+              // 3. Description: trigger conditions, not workflow summaries
+              if (description) {
+                const desc = String(description);
+                if (!/^Use when\b/i.test(desc)) {
+                  errors.push(`${rel}: "description" must start with "Use when ..." (triggering conditions only)`);
+                }
+                // Workflow-summary trap: imperative process verbs in the description
+                const processVerbs = /\b(follow|dispatch|run the|write the|execute|first .+ then|step \d)\b/i;
+                if (processVerbs.test(desc)) {
+                  warnings.push(`${rel}: "description" looks like it summarizes the workflow — agents will follow the summary and skip the body. Keep it to triggering conditions.`);
+                }
+                // Agentskills.io: entire frontmatter <= 1024 chars
+                const fmRaw = raw.split("---")[1];
+                if (fmRaw && fmRaw.length > 1024) {
+                  errors.push(`${rel}: frontmatter is ${fmRaw.length} chars (spec max 1024)`);
+                }
+                if (desc.length < 40) {
+                  warnings.push(`${rel}: "description" is short (${desc.length} chars) — thin triggers hurt discoverability`);
+                }
+              }
+
+              // 4. Word budget for the body (template dirs exempt)
+              const words = body.split(/\s+/).filter(Boolean).length;
+              if (!isTemplate && words > 900) {
+                warnings.push(`${rel}: body is ${words} words — judgment content should stay lean; move heavy reference to a supporting file (load-when-executing)`);
+              }
+
+              // 5. Required sections (case-insensitive, allow minor variants)
+              const lower = body.toLowerCase();
+              for (const section of ["when to use", "rationalizations", "red flags"]) {
+                if (!isTemplate && !lower.includes(section)) {
+                  errors.push(`${rel}: missing required section "${section}"`);
+                }
+              }
+
+              // 6. Every markdown link target exists (HTML comments stripped —
+              // commented-out examples must not fail the check)
+              const stripped = body.replace(/<!--[\s\S]*?-->/g, "");
+              const linkRe = /\[[^\]]+\]\(([^)#\s]+)\)/g;
+              let m;
+              while ((m = linkRe.exec(stripped)) !== null) {
+                const target = path.resolve(path.dirname(full), m[1]);
+                if (!fs.existsSync(target)) {
+                  errors.push(`${rel}: broken relative link -> ${m[1]}`);
+                }
+              }
+            }
+          }
+          walk(path.join(process.cwd(), "skills"));
+
+          if (checked === 0) errors.push("No SKILL.md files found under skills/ — is the layout intact?");
+          for (const w of warnings) console.log(`::warning::${w}`);
+          for (const e of errors) console.log(`::error::${e}`);
+          console.log(`Checked ${checked} skill(s): ${errors.length} error(s), ${warnings.length} warning(s)`);
+          process.exit(errors.length ? 1 : 0);
+
+      - name: No real secrets in skills (placeholder discipline)
+        shell: bash
+        run: |
+          if grep -rInE "pk_(test|live)_[A-Za-z0-9]{20,}|sk_(test|live)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{10,}" skills/; then
+            echo "::error::Real-looking provider keys found in skills/ — replace with placeholders."
+            exit 1
+          fi
+          echo "No provider keys found."
+
+  authoring-doc-links:
+    name: Docs cross-references resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          # Every docs/*.md and *.md at root must reference files that exist.
+          fail=0
+          for f in README.md CONTRIBUTING.md CHANGELOG.md docs/*.md; do
+            [ -f "$f" ] || continue
+            # Extract relative md links; skip http(s) and anchors.
+            grep -oE '\]\(([^)#]+)\)' "$f" | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:)?//' | while read -r target; do
+              base="$(dirname "$f")"
+              if [ ! -e "$base/$target" ]; then
+                echo "::error::$f: broken link -> $target"
+                fail=1
+              fi
+            done
+          done
+          exit $fail
