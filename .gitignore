@@ -1,0 +1,15 @@
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Working files (diagnostic scripts, logs, transcripts never belong in the repo)
+*.log
+*.zip
+tmp/
+temp/
