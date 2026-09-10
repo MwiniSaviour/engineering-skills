@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- `ship-a-feature` skill: gated feature lifecycle from request to production — research → spec → plan → implement → verify → review → smoke → approval → promote → verify-prod, where each phase ends at a gate (a written artifact or command output, not a feeling). Core rule: approval is per-deploy, fresh, and explicit — a morning authorization is not a launch key; silence is never approval. Includes delegation rules (subagent summaries are claims not evidence; bare "LGTM" = didn't look) and served-code verification (pushed ≠ built ≠ served ≠ loaded).
+- `templates.md` operational reference for that skill: research/review subagent prompts, gate commands, the approval-request message template, promote + served-SHA verification, rollback-first discipline.
+
 ## [1.0.0] - 2026-09-01
 
 ### Added
@@ -15,3 +20,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - `docs/authoring-skills.md` — the RED/GREEN/REFACTOR methodology for writing skills that measurably change agent behavior.
 - `docs/skill-template.md` — starter skeleton with the required sections.
 - `CONTRIBUTING.md` — quality bar and submission process.
+
