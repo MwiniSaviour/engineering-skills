@@ -1,6 +1,6 @@
 # engineering-skills
 
-> Production-grade skills (operating procedures) for AI coding agents — starting with evidence-first debugging of deployed systems.
+> Production-grade skills (operating procedures) for AI coding agents — evidence-first debugging of deployed systems, and gated feature shipping from request to production.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Skills Spec](https://img.shields.io/badge/format-agentskills.io-purple)](https://agentskills.io)
@@ -45,6 +45,26 @@ What's inside:
 
 **Provenance:** born from a real production incident — a payment funnel where `curl` against the provider's API passed every variant while every real browser failed, because the vendor's popup silently injected `currency: "NGN"` into requests. No amount of API-level testing could find that; only running the vendor's own JavaScript in a real browser could. The skill encodes that lesson and the full workflow around it.
 
+### [`ship-a-feature`](skills/ship-a-feature/)
+
+Gated feature shipping from request to production — research, spec, plan, implement, verify, review, smoke test, approval, promote, and served-code verification. For features the user expects delivered green and deployed.
+
+**Core principle:** *approval is per-deploy, fresh, and explicit — a morning authorization is not a launch key.*
+
+```
+research → spec → plan → implement → verify → review → smoke → APPROVAL → promote → verify-prod
+              (each phase ends at a gate: a written artifact or command output, not a feeling)
+```
+
+What's inside:
+
+| File | Contents |
+|---|---|
+| [`SKILL.md`](skills/ship-a-feature/SKILL.md) | The gated workflow, delegation rules, hard rules, rationalization table, red flags |
+| [`templates.md`](skills/ship-a-feature/templates.md) | Operating detail: research/review subagent prompts, gate commands, the approval-request message, promote + served-SHA verification, rollback-first discipline |
+
+**Provenance:** born from baseline testing on fresh agents — with every gate green (CI, tests, staging smoke), an agent told "get this shipped today" at 9am will promote to production unattended at 9pm, reasoning that "the instruction doesn't expire when they stop replying." The skill makes approval structural: gates are artifacts you can point to, evidence must come from the final tree, and the deploy command cannot run without a fresh explicit go for that deploy. Verified RED→GREEN: the same probe with the skill loaded refuses to deploy and stages the release instead.
+
 ## Install
 
 Skills are plain directories — installation is a copy. One-liners:
@@ -82,3 +102,4 @@ Every rule in these skills exists because skipping it cost a real debugging sess
 ## License
 
 [MIT](LICENSE) © 2026 MwiniSaviour
+
