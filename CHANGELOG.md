@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- `ship-a-feature` skill: gated feature-delivery lifecycle - research, spec, plan, implement, verify, review, browser smoke, **approval gate**, promote, post-deploy verification. Per-deploy fresh-approval rule (silence and stale authorizations are not launch keys), final-tree evidence discipline, subagent delegation rules (a summary is a claim, not evidence; a bare LGTM = didn't look), served-code verification (pushed != built != served != loaded), rationalization and red-flag handling.
+- `templates.md` operating reference for that skill: per-phase subagent prompts (research findings with file paths, severity-tagged review), final-tree verification commands, evidence-pack approval template, promote + rollback checklists.
+
 ## [1.0.0] - 2026-09-01
 
 ### Added

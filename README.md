@@ -45,6 +45,28 @@ What's inside:
 
 **Provenance:** born from a real production incident — a payment funnel where `curl` against the provider's API passed every variant while every real browser failed, because the vendor's popup silently injected `currency: "NGN"` into requests. No amount of API-level testing could find that; only running the vendor's own JavaScript in a real browser could. The skill encodes that lesson and the full workflow around it.
 
+### [`ship-a-feature`](skills/ship-a-feature/)
+
+End-to-end feature ownership - research, spec, plan, TDD implementation, subagent review, browser smoke test, and an **approval-gated** promote to production. The pipeline a feature must pass before `done` means anything.
+
+**Core principle:** *a feature is done when it is verified working in production - and approval is a human decision made per-deploy, never self-granted.*
+
+```
+research -> spec -> plan -> implement -> verify -> review -> smoke -> APPROVAL -> promote -> verify-prod
+                                                                        ^
+                                                      explicit human go, after the evidence pack;
+                                                      silence and stale authorizations are not launch keys
+```
+
+What's inside:
+
+| File | Contents |
+|---|---|
+| [`SKILL.md`](skills/ship-a-feature/SKILL.md) | The gated workflow, delegation rules (subagent claims are not evidence), hard rules with scars, rationalization table, red flags |
+| [`templates.md`](skills/ship-a-feature/templates.md) | Operating reference: research/review subagent prompts, final-tree verification commands, the evidence-pack + approval-request template, promote + served-SHA verification, rollback-first discipline |
+
+**Provenance:** born across two production engagements - a multi-tenant schema cutover and its follow-on import feature - where every gate failed at least once. A promote run succeeded while shipping a stale sidecar image (all gates green, production broke); the review gate caught a false-positive error-reporting bug that unit tests had blessed; and the baseline probe that motivated the hardest rule showed a fresh agent shipping on `ship it today` said two hours earlier, reasoning that `the instruction doesn't expire when they stop replying`. The rationalization table quotes that probe verbatim.
+
 ## Install
 
 Skills are plain directories — installation is a copy. One-liners:
